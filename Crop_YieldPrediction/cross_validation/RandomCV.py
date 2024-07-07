@@ -21,16 +21,6 @@ class RandomCV:
             scores = cross_validate(model, self.X_train, self.y_train, return_estimator=True, scoring=self.scoring_, cv=cv_method)
             cv_RMSE_ = -scores['test_neg_root_mean_squared_error']
             cv_R2 = scores['test_r2']
-
-            # test_scores = {'R2': [], 'RMSE': []}
-
-            # for estimator in scores['estimator']:
-            #     predictions = estimator.predict(self.X_test)
-            #     test_R2 = estimator.score(self.X_test, self.y_test)
-            #     test_RMSE = root_mean_squared_error(self.y_test, predictions)
-
-            #     test_scores['R2'].append(test_R2)
-            #     test_scores['RMSE'].append(test_RMSE)
             
             model.fit(self.X_train, self.y_train)
 
@@ -40,7 +30,6 @@ class RandomCV:
             test_R2 = model.score(self.X_test, self.y_test)
             
             self.results_table_.add_row([f'{name} CV Predicted', np.average(cv_RMSE_), np.average(cv_R2)])
-            # self.results_table_.add_row([f'{name} Test', np.average(test_scores['RMSE']), np.average(test_scores['R2'])])
             self.results_table_.add_row([f'{name} Test', test_RMSE, test_R2])
 
     def results(self, X_train, X_test, y_train, y_test):

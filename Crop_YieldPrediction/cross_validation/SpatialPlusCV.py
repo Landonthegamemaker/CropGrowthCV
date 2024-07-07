@@ -1,4 +1,5 @@
 from sklearn.model_selection import cross_validate, GroupKFold
+from util import ClusteringEnsamble
 from sklearn.cluster import KMeans
 from sklearn.metrics import root_mean_squared_error
 import pandas as pd
@@ -14,29 +15,26 @@ class SpatialPlusCV:
         self.random_state = random_state
         self.n_clusters = n_clusters
 
-        self.results_table_ = PrettyTable([date + ' GroupKFold CV', 'RMSE_AVG', 'R2_AVG'])
+        self.results_table_ = PrettyTable([date + ' Spatial+ CV', 'RMSE_AVG', 'R2_AVG'])
 
     def __run__(self):
         for name in self.models_:
             model = self.models_[name]
 
-            clusters = KMeans(n_clusters=self.n_clusters, random_state=self.random_state).fit(self.X_train).labels_
+            clustering_labels = []
+            for col in self.X_train:
+                labels = KMeans(n_clusters=self.n_clusters, random_state=self.random_state).fit(self.X_train[col].values.reshape(-1, 1)).labels_
+                clustering_labels.append(np.array(labels))
 
+            ensamble = ClusteringEnsamble(n_clusters=self.n_clusters)
+
+            ensamble_labels = ensamble.transform(clustering_labels)
+                
             gkf = GroupKFold(n_splits=self.n_folds)
 
-            scores = cross_validate(model, self.X_train, self.y_train, return_estimator=True, scoring=self.scoring_, cv=gkf, groups=clusters)
+            scores = cross_validate(model, self.X_train, self.y_train, return_estimator=True, scoring=self.scoring_, cv=gkf, groups=ensamble_labels)
             cv_RMSE_ = -scores['test_neg_root_mean_squared_error']
             cv_R2 = scores['test_r2']
-
-            # test_scores = {'R2': [], 'RMSE': []}
-
-            # for estimator in scores['estimator']:
-            #     predictions = estimator.predict(self.X_test)
-            #     test_R2 = estimator.score(self.X_test, self.y_test)
-            #     test_RMSE = root_mean_squared_error(self.y_test, predictions)
-
-            #     test_scores['R2'].append(test_R2)
-            #     test_scores['RMSE'].append(test_RMSE)
 
             model.fit(self.X_train, self.y_train)
 
@@ -45,7 +43,6 @@ class SpatialPlusCV:
             test_R2 = model.score(self.X_test, self.y_test)
             
             self.results_table_.add_row([f'{name} CV Predicted', np.average(cv_RMSE_), np.average(cv_R2)])
-            # self.results_table_.add_row([f'{name} Test', np.average(test_scores['RMSE']), np.average(test_scores['R2'])])
             self.results_table_.add_row([f'{name} Test', test_RMSE, test_R2])
 
     def results(self, X_train, X_test, y_train, y_test):
