@@ -32,7 +32,7 @@ class RandomCV:
 
                 self.results_table.loc[len(self.results_table.index)] = [f'{name}', 'RNDM_CV_LOFO', np.average(cv_RMSE_), np.average(cv_R2)]
                 self.results_table.loc[len(self.results_table.index)] = [f'{name}', 'RNDM_TEST_LOFO', test_RMSE, test_R2]
-        elif self.method == '3FIELD':
+        elif self.method == '2FIELD':
             # Hack to get around preprocessing class since it was implemented for LOFO
             X_combined = pd.concat([self.X_train, self.X_test])
             Y_combined = pd.concat([self.y_train, self.y_test])
@@ -52,10 +52,10 @@ class RandomCV:
                 test_RMSE = root_mean_squared_error(y_test, predictions)
                 test_R2 = model.score(X_test, y_test)
 
-                self.results_table.loc[len(self.results_table.index)] = [f'{name}', 'RNDM_CV_3_Field', np.average(cv_RMSE_), np.average(cv_R2)]
-                self.results_table.loc[len(self.results_table.index)] = [f'{name}', 'RNDM TEST_3_Field', test_RMSE, test_R2]
+                self.results_table.loc[len(self.results_table.index)] = [f'{name}', 'RNDM_CV_2_Field', np.average(cv_RMSE_), np.average(cv_R2)]
+                self.results_table.loc[len(self.results_table.index)] = [f'{name}', 'RNDM TEST_2_Field', test_RMSE, test_R2]
         else:
-            raise ValueError("method " + self.method + "not found in [LOFO, 3FIELD]")
+            raise ValueError("method " + self.method + "not found in [LOFO, 2FIELD]")
         
 
     def results(self, X_train, X_test, y_train, y_test):

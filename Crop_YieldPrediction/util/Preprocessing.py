@@ -7,7 +7,7 @@ import warnings
 warnings.filterwarnings("ignore", category=DataConversionWarning)
 
 class CombinedPreprocessor:
-    def __init__(self, drop=['Plot', 'Year', 'Date', 'Range', 'Row', 'left', 'top', 'right', 'X', 'Y', 'bottom', 'Mean.Yld.bu.ac', 'Yld Vol(Dr', 'Crop Flw(M'], inplace=False, test_size=0.3, target=['Yld Mass(D'], random_state=42):
+    def __init__(self, drop=['Plot', 'Year', 'Date', 'Range', 'Row', 'left', 'top', 'right', 'bottom', 'Mean.Yld.bu.ac', 'Yld Vol(Dr', 'Crop Flw(M'], inplace=False, test_size=0.3, target=['Yld Mass(D'], random_state=42):
         self.drop = drop
         self.inplace = inplace
         self.target = target
@@ -37,20 +37,22 @@ class CombinedPreprocessor:
         self.__scale__()
 
         xCols = [col for col in self.df1_.columns if col not in self.target]
-        self.train_validate = pd.concat([self.df1_, self.df2_])
+        self.train_validate = pd.concat([self.df1_, self.df2_]).reset_index(drop=True)
 
-        self.X_train = self.train_validate[xCols]
-        self.y_train = self.train_validate[self.target]
+        self.X_train = self.train_validate[xCols].copy(deep=True)
+        self.y_train = self.train_validate[self.target].copy(deep=True)
 
-        self.X_test = self.df3_[xCols]
-        self.y_test = self.df3_[self.target]
+        self.X_test = self.df3_[xCols].copy(deep=True)
+        self.y_test = self.df3_[self.target].copy(deep=True)
 
         # Hack to get spatial coordinates
-        # self.train_coordinates = self.X_train[['X', 'Y']]
-        # self.test_coordinates = self.X_test[['X', 'Y']]
+        self.train_coordinates = self.X_train[['X', 'Y']].copy(deep=True)
+        self.test_coordinates = self.X_test[['X', 'Y']].copy(deep=True)
 
-
-        return self.X_train, self.X_test, self.y_train, self.y_test
+        self.X_train.drop(columns=['X', 'Y'], inplace=True)
+        self.X_test.drop(columns=['X', 'Y'], inplace=True)
+        
+        return self.X_train, self.X_test, self.y_train, self.y_test, self.train_coordinates, self.test_coordinates
 
     def inverse_transform(self):
         self.df1_[self.df1_.columns] = self.scaler_.inverse_transform(self.df1_[self.df1_.columns])
