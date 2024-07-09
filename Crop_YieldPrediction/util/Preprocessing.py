@@ -1,13 +1,13 @@
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
 from sklearn.exceptions import DataConversionWarning
+import matplotlib.pyplot as plt
 
 import warnings
 warnings.filterwarnings("ignore", category=DataConversionWarning)
 
 class CombinedPreprocessor:
-    def __init__(self, drop=['Plot', 'Year', 'Date', 'Range', 'Row', 'left', 'top', 'right', 'bottom', 'X', 'Y', 'Mean.Yld.bu.ac', 'Yld Vol(Dr', 'Crop Flw(M'], inplace=False, test_size=0.3, target=['Yld Mass(D'], random_state=42):
+    def __init__(self, drop=['Plot', 'Year', 'Date', 'Range', 'Row', 'left', 'top', 'right', 'X', 'Y', 'bottom', 'Mean.Yld.bu.ac', 'Yld Vol(Dr', 'Crop Flw(M'], inplace=False, test_size=0.3, target=['Yld Mass(D'], random_state=42):
         self.drop = drop
         self.inplace = inplace
         self.target = target
@@ -21,23 +21,10 @@ class CombinedPreprocessor:
 
     def __scale__(self):
         self.scaler_ = MinMaxScaler()
-        self.df1_[self.df1_.columns] = self.scaler_.fit_transform(self.df1_[self.df1_.columns])
-        self.df2_[self.df1_.columns] = self.scaler_.transform(self.df2_[self.df1_.columns])
-        self.df3_[self.df1_.columns] = self.scaler_.transform(self.df3_[self.df1_.columns])
-
-    # def __split__(self):
-    #     xCols = [col for col in self.df1_.columns if col not in self.target]
-        
-    #     X_train1, X_test1, y_train1, y_test1 = train_test_split(self.df1_[xCols], self.df1_[self.target], test_size=self.test_size, random_state=self.random_state)
-    #     X_train2, X_test2, y_train2, y_test2 = train_test_split(self.df2_[xCols], self.df2_[self.target], test_size=self.test_size, random_state=self.random_state)
-
-    #     self.X_train = pd.concat([X_train1, X_train2])
-    #     self.X_valid = pd.concat([X_test1, X_test2])
-    #     self.y_train = pd.concat([y_train1, y_train2])
-    #     self.y_valid = pd.concat([y_test1, y_test2])
-
-    #     self.X_test = self.df3[xCols]
-    #     self.Y_test = self.df3[self.target]
+        scalecols = [col for col in self.df1_.columns if col not in ['X', 'Y']]
+        self.df1_[scalecols] = self.scaler_.fit_transform(self.df1_[scalecols])
+        self.df2_[scalecols] = self.scaler_.transform(self.df2_[scalecols])
+        self.df3_[scalecols] = self.scaler_.transform(self.df3_[scalecols])
 
     def transform(self, df1: pd.DataFrame, df2: pd.DataFrame, df3: pd.DataFrame):
         for col in self.target:
@@ -48,9 +35,6 @@ class CombinedPreprocessor:
         self.df3_ = df3 if self.inplace else df3.copy(deep=True)
         self.__drop__()
         self.__scale__()
-        # self.__split__()
-        # return self.X_train, self.X_valid, self.y_train, self.y_valid, self.X_test, self.Y_test
-
 
         xCols = [col for col in self.df1_.columns if col not in self.target]
         self.train_validate = pd.concat([self.df1_, self.df2_])
@@ -60,6 +44,11 @@ class CombinedPreprocessor:
 
         self.X_test = self.df3_[xCols]
         self.y_test = self.df3_[self.target]
+
+        # Hack to get spatial coordinates
+        # self.train_coordinates = self.X_train[['X', 'Y']]
+        # self.test_coordinates = self.X_test[['X', 'Y']]
+
 
         return self.X_train, self.X_test, self.y_train, self.y_test
 
