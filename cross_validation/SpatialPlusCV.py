@@ -85,11 +85,4 @@ class SpatialPlusCV:
         self.__run__()
 
         return self.results_table
-
-
-
-        
-            
-
-
         
