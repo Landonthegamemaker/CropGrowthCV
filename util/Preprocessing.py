@@ -2,12 +2,12 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.exceptions import DataConversionWarning
 import matplotlib.pyplot as plt
+from IPython.display import display
 
 import warnings
 warnings.filterwarnings("ignore", category=DataConversionWarning)
-
 class CombinedPreprocessor:
-    def __init__(self, drop=['Plot', 'Year', 'Date', 'Range', 'Row', 'left', 'top', 'right', 'bottom', 'Mean.Yld.bu.ac', 'Yld Vol(Dr', 'Crop Flw(M'], inplace=False, test_size=0.3, target=['Yld Mass(D'], random_state=42):
+    def __init__(self, drop=['Plot', 'Year', 'Date', 'Range', 'Row', 'left', 'top', 'right', 'bottom', 'Mean.Yld.bu.ac', 'Yld Vol(Dr', 'Crop Flw(M', 'Crop Flw(V'], inplace=False, test_size=0.3, target=['Yld Mass(D'], random_state=42):
         self.drop = drop
         self.inplace = inplace
         self.target = target
@@ -21,9 +21,10 @@ class CombinedPreprocessor:
 
     def __scale__(self):
         self.scaler_ = MinMaxScaler()
-        scalecols = [col for col in self.df1_.columns if col not in ['X', 'Y']]
+        scalecols = [col for col in self.df1_.columns if col not in ['X', 'Y', 'id_old']]
         self.df1_[scalecols] = self.scaler_.fit_transform(self.df1_[scalecols])
-        self.df2_[scalecols] = self.scaler_.transform(self.df2_[scalecols])
+        if len(self.df2_) > 0:
+            self.df2_[scalecols] = self.scaler_.transform(self.df2_[scalecols])
         self.df3_[scalecols] = self.scaler_.transform(self.df3_[scalecols])
 
     def transform(self, df1: pd.DataFrame, df2: pd.DataFrame, df3: pd.DataFrame):
@@ -36,7 +37,7 @@ class CombinedPreprocessor:
         self.__drop__()
         self.__scale__()
 
-        xCols = [col for col in self.df1_.columns if col not in self.target]
+        xCols = [col for col in self.df1_.columns if col not in self.target and col not in ['id_old']]
         self.train_validate = pd.concat([self.df1_, self.df2_]).reset_index(drop=True)
 
         self.X_train = self.train_validate[xCols].copy(deep=True)
